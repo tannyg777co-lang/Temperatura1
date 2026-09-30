@@ -28,6 +28,7 @@ Demostrar, con un modelo simplificado, cómo funciona la **arquitectura Kappa**:
 
 ---
 
+
 ## Arquitectura y Solución
 
 ```text
@@ -35,3 +36,45 @@ sensores.csv ──> ( Productor ) ──> [ eventos.log ] ──> ( Consumidor 
                 (Lee el CSV y       (Log append-only,   (Lee el log conforme
                  transmite fila      fuente de verdad)   llega y actualiza
                  por fila)                               conteo/prom/min/max)
+
+----
+
+====================================================================
+INSTRUCCIONES DE INSTALACIÓN Y EJECUCIÓN - ARQUITECTURA KAPPA
+====================================================================
+
+1. Clonar el repositorio
+--------------------------------------------------------------------
+Abre tu terminal o consola de comandos y ejecuta:
+
+   git clone https://github.com/tannyg777co-lang/Temperatura1.git
+   cd Temperatura1
+
+
+2. Crear y activar un entorno virtual (Recomendado)
+--------------------------------------------------------------------
+Para aislar las dependencias del proyecto:
+
+   En Windows (PowerShell / CMD):
+      python -m venv .venv
+      .venv\Scripts\activate
+
+   En Linux / macOS:
+      python3 -m venv .venv
+      source .venv/bin/activate
+
+
+3. Instalar las dependencias
+--------------------------------------------------------------------
+Instala los paquetes necesarios registrados en el archivo de requerimientos:
+
+   pip install -r requirements.txt
+
+
+4. Ejecutar la simulación
+--------------------------------------------------------------------
+Para iniciar el procesamiento de datos en tiempo real:
+
+   python sensorestem.py
+
+====================================================================
