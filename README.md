@@ -1,80 +1,88 @@
-# Simulación de Flujo Continuo de Eventos — Arquitectura Kappa
+# Simulación de flujo continuo de eventos — Arquitectura Kappa
 
-**Proyecto de la materia de Big Data**  
-*Universidad Politécnica de Querétaro (UPQ)*
+Proyecto de la materia de Big Data — Universidad Politécnica de Querétaro (UPQ).
 
-**Integrantes:**
-- Tanny Geraldine Correa Chávez
-- Paola Regina Morales Jaimes
-- Azul Salí Hernández Alarcón
+**Integrantes:** Tanny Geraldine Correa Chávez, Paola Regina Morales Jaimes, Azul Salí Hernández Alarcón.
 
----
+## Problema
 
-##  Problema
+Demostrar, con un modelo simplificado, cómo funciona la arquitectura Kappa: procesar
+la información principalmente como un flujo continuo de eventos, usando un log
+inmutable como fuente de verdad, en lugar de separar el procesamiento en una capa
+batch y una capa de tiempo real (como hace la arquitectura Lambda).
 
-Demostrar, con un modelo simplificado, cómo funciona la **arquitectura Kappa**: procesar la información principalmente como un flujo continuo de eventos, usando un log inmutable como fuente de verdad, en lugar de separar el procesamiento en una capa *batch* y una capa de tiempo real (como sucede en la arquitectura Lambda).
+## Datos
 
----
+`sensores.csv` — dataset de ejemplo con 90 lecturas de temperatura generadas para
+3 sensores simulados (`sensor_A`, `sensor_B`, `sensor_C`). Columnas:
 
-##  Datos
+| columna      | descripción                        |
+|--------------|-------------------------------------|
+| timestamp    | fecha y hora de la lectura (ISO 8601) |
+| sensor       | identificador del sensor            |
+| temperatura  | lectura en °C                       |
 
-`sensores.csv` — Dataset de ejemplo con 90 lecturas de temperatura generadas para 3 sensores simulados (`sensor_A`, `sensor_B`, `sensor_C`).
+## Arquitectura / solución
 
-| Columna | Descripción |
-| :--- | :--- |
-| `timestamp` | Fecha y hora de la lectura (formato ISO 8601) |
-| `sensor` | Identificador único del sensor |
-| `temperatura` | Lectura de temperatura en °C |
+```
+sensores.csv → Productor → eventos.log → Consumidor → Estadísticas en vivo
+                (lee el CSV               (log append-only,   (lee el log conforme
+                 y transmite               fuente de verdad)    llega y actualiza
+                 fila por fila)                                 conteo/prom/min/max)
+```
 
----
+- **Productor**: lee `sensores.csv` fila por fila y va agregando cada lectura a
+  `eventos.log`, simulando que los datos llegan en tiempo real (una lectura cada
+  0.3 s).
+- **Log de eventos** (`eventos.log`): archivo *append-only* donde cada línea es un
+  evento en formato JSON. Es la fuente de verdad del sistema, igual que en Kappa.
+- **Consumidor**: lee el log conforme se van escribiendo eventos nuevos, acumula los
+  eventos en un DataFrame de `pandas` y recalcula con `groupby` las estadísticas por
+  sensor (número de lecturas, promedio, mínimo y máximo), mostrándolas en una tabla
+  en vivo en la terminal con `rich`.
 
+Productor y consumidor corren en paralelo (dos hilos), comunicándose únicamente a
+través del log, tal como en Kappa un componente nuevo podría reprocesar el stream
+completo volviendo a leer el log desde el inicio.
 
-## Arquitectura y Solución
+## Instalación
 
-```text
-sensores.csv ──> ( Productor ) ──> [ eventos.log ] ──> ( Consumidor ) ──> Estadísticas en vivo
-                (Lee el CSV y       (Log append-only,   (Lee el log conforme
-                 transmite fila      fuente de verdad)   llega y actualiza
-                 por fila)                               conteo/prom/min/max)
+Se necesita Python 3.9+ y las dependencias listadas en `requirements.txt` (`pandas`
+para las estadísticas y `rich` para la tabla en la terminal).
 
-----
+```bash
+git clone https://github.com/tannyg777co-lang/Temperatura1.git
+cd <Temperatura1>
+pip install -r requirements.txt
+```
 
-====================================================================
-INSTRUCCIONES DE INSTALACIÓN Y EJECUCIÓN - ARQUITECTURA KAPPA
-====================================================================
+## Ejecución
 
-1. Clonar el repositorio
---------------------------------------------------------------------
-Abre tu terminal o consola de comandos y ejecuta:
+```bash
+python sensorestem.py
+```
 
-   git clone https://github.com/tannyg777co-lang/Temperatura1.git
-   cd Temperatura1
+El script:
+1. Reinicia `eventos.log`.
+2. Levanta el productor y el consumidor en hilos paralelos.
+3. Imprime cada evento conforme llega, con las estadísticas actualizadas.
+4. Al terminar de leer las 90 filas, imprime un resumen final por sensor.
 
+## Resultados / interpretación
 
-2. Crear y activar un entorno virtual (Recomendado)
---------------------------------------------------------------------
-Para aislar las dependencias del proyecto:
+Con las 90 lecturas del dataset, el consumidor termina reportando, por cada
+sensor, cuántas lecturas procesó y su promedio, mínimo y máximo — todo calculado
+de forma incremental, evento por evento, sin necesidad de tener todos los datos
+cargados de antemano. Esto ilustra la idea central de Kappa: un solo camino de
+procesamiento (streaming) es suficiente tanto para ver resultados en tiempo real
+como para recalcular todo el histórico, ya que basta con volver a leer el log.
 
-   En Windows (PowerShell / CMD):
-      python -m venv .venv
-      .venv\Scripts\activate
+## Estructura del repositorio
 
-   En Linux / macOS:
-      python3 -m venv .venv
-      source .venv/bin/activate
-
-
-3. Instalar las dependencias
---------------------------------------------------------------------
-Instala los paquetes necesarios registrados en el archivo de requerimientos:
-
-   pip install -r requirements.txt
-
-
-4. Ejecutar la simulación
---------------------------------------------------------------------
-Para iniciar el procesamiento de datos en tiempo real:
-
-   python sensorestem.py
-
-====================================================================
+```
+.
+├── sensorestem.py      # productor + consumidor
+├── sensores.csv        # dataset de ejemplo
+├── requirements.txt
+└── README.md
+```
