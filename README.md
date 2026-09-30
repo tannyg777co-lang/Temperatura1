@@ -2,7 +2,7 @@
 
 Proyecto de la materia de Big Data — Universidad Politécnica de Querétaro (UPQ).
 
-**Integrantes:** Tanny Geraldine Correa Chávez, Paola Regina Morales Jaimes, Azul Salí Hernández Alarcón.
+**Integrantes:** Tanny Geraldine Correa Chávez, Paola Regina Morales Jaimes, Azul Dalí Hernández Alarcón.
 
 ## Problema
 
